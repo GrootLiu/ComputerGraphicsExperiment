@@ -1,0 +1,146 @@
+<!--
+ * @Descripttion: Groot的代码
+ * @version: 1.0.0
+ * @Author: Groot
+ * @Date: 2021-07-05 14:53:27
+ * @LastEditors: Groot
+ * @LastEditTime: 2021-07-06 08:50:39
+-->
+<!DOCTYPE html>
+<html lang="en">
+
+
+<head>
+    <script type="text/javascript" src="/js/jquery-3.6.0.min.js"></script>
+    <style type="text/css">
+        .info {
+            position: relative;
+            margin-bottom: 5px;
+        }
+
+        .info input {
+            width: 60px;
+            height: 20px;
+        }
+
+        #show {
+            border: 3px solid #bababa;
+        }
+
+        #body {
+            text-align: center
+        }
+    </style>
+</head>
+
+<body id="body">
+    <canvas id="myCanvas" width="1000px" height="650px"></canvas>
+</body>
+
+</html>
+
+<script type="text/javascript">
+    var canvas = document.getElementById("myCanvas");
+    var ctx = canvas.getContext('2d');
+    ctx.fillStyle = "rgba(232,221,203,0.5)";
+    ctx.fillRect(0, 0, 1000, 1000);
+
+    position = [];
+
+    canvas.addEventListener('click', click);
+    canvas.addEventListener('onkeypress', onkeypress);
+
+    document.onkeypress = function () {
+        var keynum = window.event;
+        if (keynum.keyCode == 13) {
+            drawBezierCurve(position);
+            position = [];
+        }
+    }
+
+    //修正函数
+    HTMLCanvasElement.prototype.getMousePosition = function (event) {
+        var totalOffsetX = 0;
+        var totalOffsetY = 0;
+        var canvasX = 0;
+        var canvasY = 0;
+        var currentElement = this;
+
+        do {
+            totalOffsetX += currentElement.offsetLeft;
+            totalOffsetY += currentElement.offsetTop;
+            currentElement = currentElement.offsetParent;
+        } while (currentElement);
+
+        canvasX = event.pageX - totalOffsetX;
+        canvasY = event.pageY - totalOffsetY;
+
+        // Fix for variable canvas width
+        canvasX = Math.round(canvasX * (this.width / this.offsetWidth));
+        canvasY = Math.round(canvasY * (this.height / this.offsetHeight));
+
+        return { x: canvasX, y: canvasY };
+    };
+
+    function click(e) {
+        console.log("000");
+        position.push(canvas.getMousePosition(e));
+        if (position.length >= 2) {
+            drawLine(position[position.length - 2].x, position[position.length - 1].x, position[position.length - 2].y, position[position.length - 1].y);
+        }
+    }
+
+    function drawLine(x1, x2, y1, y2) {
+        ctx.strokeStyle = "black";
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+    }
+
+    function drawBezierCurve(position) {
+        var delt = 1.0 / 2000;//delt 步长
+        var x, y;
+        px = [];
+        py = [];
+        for (var i = 0; i <= position.length - 1; i++) {
+            px[i] = position[i].x;
+
+            py[i] = position[i].y;
+        }
+        for (var t = 0; t < 1; t += delt) {
+            x = deCasteliau(t, px);
+            y = deCasteliau(t, py);
+            // console.log(x);
+            putpixel(x, y);
+        }
+    }
+
+    function deCasteliau(t, p) {
+        var length = p.length;
+        var P = new Array(length);
+        {
+            for (var i = 0; i < length; i++) {
+                P[i] = new Array(length);
+            }
+        }
+        var n = length - 1;
+        for (var k = 0; k <= n; k++) {
+            P[0][k] = p[k];
+        }
+        for (var r = 1; r <= n; r++) {
+            for (var i = 0; i <= n - r; i++) {
+                P[r][i] = (1 - t) * P[r - 1][i] + t * P[r - 1][i + 1];
+                console.log(r, i);
+                console.log(P[r][i]);
+            }
+        }
+        var point = P[n][0];
+        return point;
+    }
+
+    function putpixel(x, y) {
+        ctx.fillStyle = "rgba(254, 67, 101, 1.2)";
+        ctx.fillRect(x, y, 1, 1);
+    }
+
+</script>

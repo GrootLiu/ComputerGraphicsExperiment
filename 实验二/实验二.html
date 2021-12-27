@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<html>
+
+<head>
+    <script type="text/javascript" src="/js/jquery-3.6.0.min.js"></script>
+    <style type="text/css">
+        .info {
+            position: relative;
+            margin-bottom: 5px;
+        }
+
+        .info input {
+            width: 60px;
+            height: 20px;
+        }
+
+        #show {
+            border: 3px solid #bababa;
+        }
+
+        #body {
+            text-align: center
+        }
+    </style>
+</head>
+
+<body id="body">
+    <canvas id="myCanvas" width="1000px" height="650px"></canvas>
+</body>
+
+</html>
+
+<script type="text/javascript">
+
+    var canvas = document.getElementById("myCanvas");
+    var ctx = canvas.getContext('2d');
+    ctx.fillStyle = "rgba(232,221,203,0.5)";
+    ctx.fillRect(0, 0, 1000, 1000);
+    position = [];
+
+    canvas.addEventListener('click', click);
+
+    //修正函数
+    HTMLCanvasElement.prototype.getMousePosition = function (event) {
+        var totalOffsetX = 0;
+        var totalOffsetY = 0;
+        var canvasX = 0;
+        var canvasY = 0;
+        var currentElement = this;
+
+        do {
+            totalOffsetX += currentElement.offsetLeft;
+            totalOffsetY += currentElement.offsetTop;
+            currentElement = currentElement.offsetParent;
+        } while (currentElement);
+
+        canvasX = event.pageX - totalOffsetX;
+        canvasY = event.pageY - totalOffsetY;
+
+        // Fix for variable canvas width
+        canvasX = Math.round(canvasX * (this.width / this.offsetWidth));
+        canvasY = Math.round(canvasY * (this.height / this.offsetHeight));
+
+        return { x: canvasX, y: canvasY };
+    };
+
+    function click(e) {
+        position.push(canvas.getMousePosition(e));
+        if (position.length == 2) {
+            drawClickLine(position[0].x, position[1].x, position[0].y, position[1].y);
+            position = [];
+        }
+    }
+
+    function drawClickLine(x1, x2, y1, y2) {
+        // 使用 Bresenham 算法画任意斜率的直线（包括起始点，不包括终止点）
+        var x = x1;
+        var y = y1;
+        var dx = Math.abs(x2 - x1);
+        var dy = Math.abs(y2 - y1);
+        var s1 = x2 > x1 ? 1 : -1;
+        var s2 = y2 > y1 ? 1 : -1;
+
+        var interchange = false;    // 默认不互换 dx、dy
+        if (dy > dx)                // 当斜率大于 1 时，dx、dy 互换
+        {
+            var temp = dx;
+            dx = dy;
+            dy = temp;
+            interchange = true;
+        }
+
+        var p = 2 * dy - dx;
+        for (var i = 0; i < dx; i++) {
+            putpixel(x, y);
+            if (p >= 0) {
+                if (!interchange)        // 当斜率 < 1 时，选取上下象素点
+                    y += s2;
+                else                    // 当斜率 > 1 时，选取左右象素点
+                    x += s1;
+                p = p + 2 * dy - 2 * dx;
+            }
+            if (!interchange)
+                x += s1;                // 当斜率 < 1 时，选取 x 为步长
+            else
+                y += s2;                // 当斜率 > 1 时，选取 y 为步长
+            p += 2 * dy;
+        }
+    }
+
+    function putpixel(x, y) {
+        ctx.fillStyle = "black";
+        ctx.fillRect(x, y, 1, 0.5);
+    }
+</script>
